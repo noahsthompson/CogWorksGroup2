@@ -30,8 +30,8 @@ class songFP:
         database = []#rewrite add
         #database = {}
         
-       '''daniel rewrote own version
-       def __init__(self, load = None):
+        '''daniel rewrote own version
+        def __init__(self, load = None):
         self.songDatabase = {} # "Song Title" : (Duration(int), Song(np.array))
         self.peakDatabase = {}
         self.recordings = 0
@@ -119,8 +119,7 @@ class songFP:
                     else:
                         database[x] = [(name, t1)]  
 #     return database
-    
-1
+
         pass
 
     def deleteSong(self, song):
@@ -147,7 +146,6 @@ class songFP:
         for notes in excerpt:
             if (notes in database):
                 templist.append(tuple(database[notes]))
-        print(templist)
         counts = collections.Counter(templist)
         return counts.most_common()[0][0][0]
 
