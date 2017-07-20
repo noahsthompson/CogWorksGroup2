@@ -19,7 +19,7 @@ class faceDatabase():
         loadFile: the directory of a comma seperated value file to be read in to faceData
         """
     
-    def __init__(self,loadFile=None):
+    def __init__(self,loadFile == None):
         if(loadFile=None):
             self.faceData=np.array([])
             
@@ -50,8 +50,8 @@ class faceDatabase():
         if (name in names):
             #gets index of face
             index=np.where(names == name)
-                #Updates face data with new image
-                self.faceData[index]= (name,(get_descrip(index)+discriptor)/(get_weight(index)+1),get_weight(index)+1)
+            #Updates face data with new image
+            self.faceData[index]= (name,(get_descrip(index)+discriptor)/(get_weight(index)+1),get_weight(index)+1)
         else:
             #Adds new face to database
             self.faceData=np.append(self.faceData,[(name,discriptor,1)])
