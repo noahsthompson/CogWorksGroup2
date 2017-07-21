@@ -171,4 +171,215 @@ test.add('noah', test.img_to_array(io.imread("Noah_Thompson3.jpg"))[0])
 '''
 
 
+class facial:
+    
+    def __init__(self):
+        self.database = [] # [(Name1, Descriptor1), (Name2, Descriptor2)...]
+        self.fig, self.ax = plt.subplots()
+        
+    def loadfile(self, name, path, upscale=1, folder=False):
+        # Reads file
+        if(folder == True):
+            for filename in os.listdir(path):
+                self.loadfile(filename[:-5] + filename[-4:], path + "/" + filename)
+        else:        
+            img_array = io.imread("{}".format(path))[:,:,:3]
+            detections = list(face_detect(img_array, upscale))
 
+            # Loads and displays face if a SINGLE one is detected
+            if len(detections) == 1:
+                det = detections[0]
+                l, r, t, b = det.left(), det.right(), det.top(), det.bottom()
+                shape = shape_predictor(img_array, det)
+                descriptor = np.array(face_rec_model.compute_face_descriptor(img_array, shape))
+                assert descriptor.size == 128, "Descriptor is not of shape (128, 1)!"
+                self.database.append(("{}".format(name), descriptor))
+                self.ax.clear()
+                self.ax.imshow(img_array)
+                self.ax.set_xticks([])
+                self.ax.set_yticks([])
+                self.ax.add_patch(patches.Rectangle((l,b), r-l, t-b, linewidth=2, edgecolor='m', facecolor='none'))
+                plt.xlabel("{} has been successfully loaded!".format(name))
+                plt.ion()
+                plt.draw()
+                try:
+                    plt.pause(0.5)
+                except Exception:
+                    pass
+            elif len(detections) >= 1:
+                print("Error: More than 1 face detected in file given!")
+            else:
+                print("Error: No faces detected in file given!")
+        
+    def loadcamera(self, name, upscale=1):
+        # Takes picture
+        img_array = take_picture()[:,:,:3]
+        detections = list(face_detect(img_array, upscale))
+        
+        #Loads and displays face if a SINGLE one is detected
+        if len(detections) == 1:
+            det = detections[0]
+            l, r, t, b = det.left(), det.right(), det.top(), det.bottom()
+            shape = shape_predictor(img_array, det)
+            descriptor = np.array(face_rec_model.compute_face_descriptor(img_array, shape))
+            assert descriptor.size == 128, "Descriptor is not of shape (128, 1)!"
+            self.database.append(("{}".format(name), descriptor))
+            self.ax.clear()
+            self.ax.imshow(img_array)
+            self.ax.set_xticks([])
+            self.ax.set_yticks([])
+            self.ax.add_patch(patches.Rectangle((l,b), r-l, t-b, linewidth=2, edgecolor='m', facecolor='none'))
+            plt.xlabel("{} has been successfully loaded!".format(name))
+            plt.ion()
+            plt.draw()
+            try:
+                plt.pause(0.5)
+            except Exception:
+                pass
+        else:
+            print("Error: Unable to detect {}'s face!".format(name))
+        
+    def file(self, path, upscale=1):
+        # Loads file and displays picture
+        img_array = io.imread("{}".format(path))[:,:,:3]
+        detections = list(face_detect(img_array, upscale))
+        self.ax.clear()
+        self.ax.imshow(img_array)
+        self.ax.set_xticks([])
+        self.ax.set_yticks([])
+        conf = 0
+        
+        # Attempts to match every face detected in file
+        if len(detections) >= 1:
+            for e in detections:
+                det = e
+                l, r, t, b = det.left(), det.right(), det.top(), det.bottom()
+                shape = shape_predictor(img_array, det)
+                descriptor = np.array(face_rec_model.compute_face_descriptor(img_array, shape))
+                assert descriptor.size == 128, "Descriptor is not of shape (128, 1)!"
+                
+                # Compares descriptor vector with each descriptor vector in database
+                distances = np.zeros(len(self.database))
+                for i in range(len(self.database)):
+                    distances[i] = np.sqrt(np.sum((descriptor-self.database[i][1])**2))
+                indexes = np.argsort(distances)
+                
+                # Confidence level
+                if distances[indexes[0]] < 0.5: 
+                    name = self.database[indexes[0]][0]
+                    if self.database[indexes[0]][0] is not self.database[indexes[1]][0]:
+                        conf += 0
+                    elif self.database[indexes[0]][0] is not self.database[indexes[2]][0]:
+                        conf += 1
+                    elif self.database[indexes[0]][0] is not self.database[indexes[3]][0]:
+                        conf += 2
+                    else:
+                        conf += 3
+                else:
+                    name = "Unidentified"
+                
+                # Displays the guesses
+                self.ax.text((r-l)/2+l, b+50, "{}".format(name), fontsize=10, horizontalalignment = "center", color = "m")
+                self.ax.add_patch(patches.Rectangle((l,b), r-l, t-b, linewidth=2, edgecolor='m', facecolor='none'))
+        else:
+            print("Error: No faces detected in file given!")
+        if conf/len(detections) > 2:
+            plt.xlabel("Confidence = High")
+        elif conf/len(detections) > 1:
+            plt.xlabel("Confidence = Medium")
+        else:
+            plt.xlabel("Confidence = Low")
+        plt.ion()
+        plt.draw()
+        try:
+            plt.pause(0.5)
+        except Exception:
+            pass
+            
+    def camera(self, upscale=1):
+        # Takes picture and displays it
+        img_array = take_picture()[:,:,:3]
+        detections = list(face_detect(img_array, upscale))
+        self.ax.clear()
+        self.ax.imshow(img_array)
+        self.ax.set_xticks([])
+        self.ax.set_yticks([])
+        conf = 0
+        
+        # Attempts to match every face detected in file
+        if len(detections) >= 1:
+            for e in detections:
+                det = e
+                l, r, t, b = det.left(), det.right(), det.top(), det.bottom()
+                shape = shape_predictor(img_array, det)
+                descriptor = np.array(face_rec_model.compute_face_descriptor(img_array, shape))
+                assert descriptor.size == 128, "Descriptor is not of shape (128, 1)!"
+                
+                # Compares descriptor vector with each descriptor vector in database
+                distances = np.zeros(len(self.database))
+                for i in range(len(self.database)):
+                    distances[i] = np.sqrt(np.sum((descriptor-self.database[i][1])**2))
+                indexes = np.argsort(distances)
+                
+                # Confidence level
+                if distances[indexes[0]] < 0.5: 
+                    name = self.database[indexes[0]][0]
+                    if self.database[indexes[0]][0] is not self.database[indexes[1]][0]:
+                        conf += 0
+                    elif self.database[indexes[0]][0] is not self.database[indexes[2]][0]:
+                        conf += 1
+                    elif self.database[indexes[0]][0] is not self.database[indexes[3]][0]:
+                        conf += 2
+                    else:
+                        conf += 3
+                else:
+                    name = "Unidentified"
+                
+                # Displays the guesses
+                self.ax.text((r-l)/2+l, b+50, "{}".format(name), fontsize=10, horizontalalignment = "center", color = "m")
+                self.ax.add_patch(patches.Rectangle((l,b), r-l, t-b, linewidth=2, edgecolor='m', facecolor='none'))
+        else:
+            print("Error: No faces detected in file given!")
+        if conf/len(detections) > 2:
+            plt.xlabel("Confidence = High")
+        elif conf/len(detections) > 1:
+            plt.xlabel("Confidence = Medium")
+        else:
+            plt.xlabel("Confidence = Low ({})".format(conf))
+        plt.ion()
+        plt.draw()
+        try:
+            plt.pause(0.5)
+        except Exception:
+            pass
+        
+    def clear(self):
+        # Wipes the database
+        self.database = []    
+        
+    def remove(self, name):
+        # Removes every photo of the person named stored in the database
+        for e in self.database:
+            if e[0] == name:
+                self.database.remove(e)
+    
+    def functions(self):
+        print("")
+        print("Available Functions:")
+        print("loadfile(Name, File Path, upscale=1)")
+        print("loadcamera(Name, upscale=1)")
+        print("file(File Path, upscale=1)")
+        print("camera(upscale=1):")
+        print("clear()")
+        print("remove(Name)")
+        print("saved()")
+    
+    def saved(self):
+        # Prints out the faces currently loaded
+        print("")
+        print("The following faces are currently saved in the database:")
+        cnt = Counter()
+        for e in self.database:
+            cnt[e[0]] += 1
+        for name in cnt:
+            print(name + "  x{}".format(cnt[name]))
