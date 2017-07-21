@@ -117,3 +117,27 @@ class faceDatabase():
         return faceArr
     
     
+    def loadcamera(self, name, upscale=1):
+        # Takes picture
+        img_array = take_picture()[:,:,:3]
+        detections = list(face_detect(img_array, upscale))
+        
+        #Loads and displays face if a SINGLE one is detected
+        if len(detections) == 1:
+            det = detections[0]
+            l, r, t, b = det.left(), det.right(), det.top(), det.bottom()
+            shape = shape_predictor(img_array, det)
+            descriptor = np.array(face_rec_model.compute_face_descriptor(img_array, shape))
+            assert descriptor.size == 128, "Descriptor is not of shape (128, 1)!"
+            self.database.append(("{}".format(name), descriptor))
+            self.ax.clear()
+            self.ax.imshow(img_array)
+            self.ax.set_xticks([])
+            self.ax.set_yticks([])
+            self.ax.add_patch(patches.Rectangle((l,b), r-l, t-b, linewidth=2, edgecolor='m', facecolor='none'))
+            plt.xlabel("{} has been successfully loaded!".format(name))
+            plt.show()
+        else:
+            print("Error: Unable to detect {}'s face!".format(name))
+    
+    
