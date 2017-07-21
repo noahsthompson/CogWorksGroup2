@@ -7,9 +7,6 @@ import numpy as np
 from camera import save_camera_config, take_picture
 from dlib_models import load_dlib_models
 
-def avgVectorIn(vtotal, vadd, weight):
-    return ((vtotal * weight) + vadd)/(weight + 1)
-
 class faceDatabase():
     """faceDatabase:
         fields:
@@ -30,12 +27,7 @@ class faceDatabase():
         else:
             pass
         
-    def camera(self, port=0, exposure=0.2):
-        save_camera_config(port, exposure)
-        img_array = take_picture()
-        if img_array == []:
-            raise ValueError("No face detected") 
-        return img_array
+
 
 
         
@@ -53,7 +45,6 @@ class faceDatabase():
             name(str)- Name of new face
             descriptor(np.array)- (128,) array of descriptors"""
         # gets the array of names
-
         for face in self.faceData:
             if face[0] == name:
                 face[1] = avgVectorIn(face[1], descriptor, face[2])
@@ -69,27 +60,23 @@ class faceDatabase():
     #database shape: np.array((name1, vector1, weight1), (name2, vector2, weight2), etc.)
     def match(self, imgvector):
         #vector.shape: (128,)
-        closest_person = "" #most similar person
-        minDist = .5 #distance w/ most similar person
+        closest_person = "unknown" #most similar person
+        minDist = .55 #distance w/ most similar person
+        confidence = 'low'
         #print(self.faceData)
         for face in self.faceData: #look through every face in db
             l2 = np.sqrt(np.sum((face[1] - imgvector)**2))#distance between db face and the given face
-            print(l2)
             if (l2 < minDist): #if l2 is smaller
                 minDist = l2
                 closest_person = face[0]
-
-        if (minDist == 0.5):
-            return "unknown"
-        else:
-            print('minDist: ', minDist)
-            return closest_person
+        if (minDist < .55):
+            confidence = 'med'
+        if (minDist < .4):
+            confidence = 'high'
+        print(minDist)
+        return closest_person, confidence
  
         
-    def addCamera(self, name, port=0, exposure=0.2):
-        save_camera_config(port, exposure)
-        img_array = take_picture()
-        self.add(name,self.img_to_array(img_array)[0])
         
 
         
@@ -128,21 +115,51 @@ class faceDatabase():
     
     def detectFromImg(self, img, upscale = 4):
         faces = self.img_to_array(img)[0]
+        conf = []
         #print(faces.shape)
         people = []
         for face in faces:
-            people.append(self.match(face))
-        return people, self.img_to_array(img)[1]
+            people.append(self.match(face)[0])####
+            conf.append(self.match(face)[1])
+        return people, self.img_to_array(img)[1], conf
     
     def abracadabra(self):
         y = test.camera()
-        people, borders = test.detectFromImg(y)
+        people, borders, confidences = test.detectFromImg(y)
         fig,ax = plt.subplots()
         ax.imshow(y)
+        color = 'red'
         for e, border in enumerate(borders):
-            ax.add_patch(patches.Rectangle((border[1], border[3]),border[0]-border[1],border[2]-border[3],edgecolor = 'red', fill=False))
-            ax.text(border[0]+2, border[3]-10, people[e], bbox={'facecolor':'red', 'alpha':0.6, 'pad':1})
+            if confidences[e] == 'low':
+                color = 'red'
+            if confidences[e] == 'med':
+                color = 'yellow'
+            if confidences[e] == 'high':
+                color = 'green'
+            ax.add_patch(patches.Rectangle((border[1], border[3]),border[0]-border[1],border[2]-border[3],edgecolor = color, fill=False))
+            ax.text(border[0]+2, border[3]-10, people[e], bbox={'facecolor':color, 'alpha':0.6, 'pad':1})
         print('The people in this picture are(in order):', ', '.join(people))
+        
+    def addCamera(self, name, port=0, exposure=0.2):
+        save_camera_config(port, exposure)
+        img_array = take_picture()
+        face = self.img_to_array(img_array)[0]
+        print('There are this many faces: ', len(face))
+        if len(face) == 0:
+            print(name, ' was not detected. Please try again!')
+            return None
+        print(img_array.shape)
+        if len(face) > 1:
+            print('Too many faces were detected. Please try again!')
+            return None
+        print(name, ' was successfully added to the database.')
+        fig,ax = plt.subplots()
+        ax.imshow(img_array)
+        self.add(name,face)
+        
+    
+
+        
         
     
 test = faceDatabase()
