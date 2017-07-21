@@ -7,6 +7,9 @@ import numpy as np
 from camera import save_camera_config, take_picture
 from dlib_models import load_dlib_models
 
+def avgVectorIn(vtotal, vadd, weight):
+    return ((vtotal * weight) + vadd)/(weight + 1)
+
 class faceDatabase():
     """faceDatabase:
         fields:
@@ -36,15 +39,14 @@ class faceDatabase():
 
 
         
-    def get_name(self,index):#DEAD
+    def get_name(self,index):
         return self.faceData[index,0]
     
-    def get_descrip(self,index):#DEAD
+    def get_descrip(self,index):
         return self.faceData[index,1]
     
-    def get_weight(self,index):#DEAD
+    def get_weight(self,index):
         return self.faceData[index,2]
-    
     def add(self,name,descriptor):
         """ add: adds new face to database, or averages new descriptor with name already in database
             params:
@@ -124,7 +126,7 @@ class faceDatabase():
             boxes.append((l,r,t,b))
         return faceArr, boxes
     
-    def detectFromImg(self, img, upscale = 1):
+    def detectFromImg(self, img, upscale = 4):
         faces = self.img_to_array(img)[0]
         #print(faces.shape)
         people = []
@@ -137,18 +139,19 @@ class faceDatabase():
         people, borders = test.detectFromImg(y)
         fig,ax = plt.subplots()
         ax.imshow(y)
-        for border in borders:
+        for e, border in enumerate(borders):
             ax.add_patch(patches.Rectangle((border[1], border[3]),border[0]-border[1],border[2]-border[3],edgecolor = 'red', fill=False))
+            ax.text(border[0]+2, border[3]-10, people[e], bbox={'facecolor':'red', 'alpha':0.6, 'pad':1})
         print('The people in this picture are(in order):', ', '.join(people))
         
     
 test = faceDatabase()
-
-'''test.add('obama', test.img_to_array(io.imread("obama.jpg"))[0])
+'''
+test.add('obama', test.img_to_array(io.imread("obama.jpg"))[0])
 test.add('obama', test.img_to_array(io.imread("obama2.jpg"))[0])
 test.add('noah', test.img_to_array(io.imread("Noah_Thompson1.jpg"))[0])
 test.add('noah', test.img_to_array(io.imread("Noah_Thompson3.jpg"))[0])
 '''
 
-#test.addCamera('noah')
-#test.abracadabra()
+
+
