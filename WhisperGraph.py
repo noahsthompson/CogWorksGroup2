@@ -1,3 +1,4 @@
+import collections
 def plot_graph(graph, adj):
     """ Use the package networkx to produce a diagrammatic plot of the graph, with
         the nodes in the graph colored according to their current labels.
@@ -81,7 +82,7 @@ class whisperNode():
         edges=[]
         for node in nodes:
             l2dist=np.sqrt(np.sum((self.ID - node.ID)**2))
-            if(l2dist<5):
+            if(l2dist<.5):
                 edges.append(1)
                 self.neighbors.append(node)
                 weight=1/(l2dist**2)
@@ -203,10 +204,91 @@ class whisperGraph():
         for node in self.nodes:
             labels.append(node.getLabel())
         return labels
-    
+    def getGroups(self):
+        return Counter(self.getLabels()).keys()
     def plot(self):
         """plot:
                 plots node graph"""
         plot_graph(tuple(self.nodes),self.edges)
+        
+import os
+import skimage.io as io
+import faceDatabase
+class imageSorter():
+    
+    def __init__(self):
+        self.path=
+        self.faces=[]
+        self.file=[]
+        self.groups=[]
+        self.imageGraph=None
+    def findFaceFromFolder(self, path):
+        self.path=path
+        if (os.path.isdir(path)):
+            for file in os.listdir(path):
+                filePath=path+"/"+file
+                img_array = io.imread("{}".format(file))[:,:,:3]
+                Faces,boxes=faceDatabase.img_to_array(img_array)
+                if(len(Faces.shape)==2):
+                    for face in Faces:
+                        self.faces.append(face)
+                        self.file.append(file)
+                     
+                        
+                elif(len(Faces.shape)==1):
+                    self.faces.append(Faces)
+                    self.file.append(file)
+        return self.fileFace
+    def clusterImages(self):
+        self.imageGraph=whisperGraph(self.faces,False)
+        self.imageGraph.cluster()
+        return self.imageGraph.getLabels()
+    def groupFiles(self):
+        groupedFiles={}
+        for g in self.imageGraph.getGroups():
+            groupedFiles[g]=[]
+        for i in range(len(self.file)):
+            groupedFiles[self.imageGraph.getLabels()[i]].append(i)
+        self.groups=groupedFiles
+        return self.groups
+    def averageFace(self,fDatabase):
+        
+        groupLabel={}
+        unknownNumber=0
+        for key in self.groups.keys()
+            runningTotal=np.zeros((128,))
+            for i in self.groups(key):
+                runningTotal+= self.faces(i)
+            averageFace=runningTotal/(len(self.groups(key)))
+            name, confidence= fDatabase.match(averageFace)
+            if(name == "?"):
+                name="unknown"+ str(unknownNumber)
+                unknownNumber+=1
+            groupLabel[key]=name
+        return groupLabel
+    def printGroups(self,fDatabase):
+        grouplabels=self.averageFace(fDatabase)
+        for key in self.groups.keys():
+            for i in self.groups(key):
+                print(grouplabels[key]+":"+self.files[i])
+    def sortFiles(self,fDatabase):
+        grouplabels=self.averageFace(fDatabase)
+        for key in self.groups.keys():
+            for i in self.groups(key):
+                dirPath=path+"/"+grouplabels[i]
+                os.mkdir(dirPath)
+                os.rename(path+"/"+self.file[i],dirPath+"/"+self.file[i])
+                
+                
+                
+        
+        
+        
+        
+        
+        
+                
+               
+        
 
     
