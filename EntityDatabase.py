@@ -1,4 +1,4 @@
-import collect_rss
+
 import nltk, pickle as pkl
 from nltk.tokenize import word_tokenize
 from collections import defaultdict, Counter
@@ -21,12 +21,13 @@ class entityDatabase():
         #Document ID to Counter of entities in doc
         self.id_entity_count={}
         #Entity to set of IDs of docs that contain that entity
-        self.entity_doc=defaultdict(set())
+        self.entity_doc=defaultdict(set)
         #dictionary of counts 
-        self.entity_relationships=defaultdict(Counter())
+        self.entity_relationships=defaultdict(Counter)
     def tokenize(self,text):
         return nltk.word_tokenize(sentence)
-    def getEntities(self,tokens):
+    def getEntities(self,words):
+        tokens=word_tokenize(words)
         pos = nltk.pos_tag(tokens)
         named_entities = nltk.ne_chunk(pos, binary=True)
         entities=[]
@@ -36,7 +37,9 @@ class entityDatabase():
                 entities.append(tuple([ne[0] for ne in ents]))
         return entities
     def add(self,doc,id):
-        entities=getEntities(doc)
+        if id in self.id_entity_count.keys():
+            raise Exception("Already In Database")
+        entities=self.getEntities(doc)
         self.id_entity_count[id]=Counter(entities)
         
         for entity in entities:
@@ -48,7 +51,9 @@ class entityDatabase():
         
             
     def remove(self,id):
-        entities=(self.id_entity_count[id].values())
+        if not(id in self.id_entity_count.keys()):
+            raise Exception("Not In Database")
+        entities=(self.id_entity_count[id].keys())
         for entity in entities:
             self.entity_doc[entity].remove(id)
     def encode(self, entities, code):
@@ -57,8 +62,9 @@ class entityDatabase():
             c.append(code[entity])
         return c
 
-    def associateEntity(self,entity,k):
-        return unzip(self.entity_relationships[entity].most_common(k))[0]
+    def associateEntity(self,entity,k=None):
+        related=self.entity_relationships[entity].most_common(k)
+        return unzip(related)[0]
     def associateTopic(self,topic,engine,context=5,out=5):
         ids=engine.query(topic)
         totalCount=Counter()
