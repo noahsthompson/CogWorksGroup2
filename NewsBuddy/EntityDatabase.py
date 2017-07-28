@@ -59,7 +59,7 @@ class entityDatabase():
             Returns: None
             """
         if id == None:
-            id=hash(doc)
+            id=hashlib.sha224(doc.encode('UTF-8')).hexdigest()
         if id in self.id_entity_count.keys():
             raise Exception("Already In Database")
         entities=self.getEntities(doc)
@@ -156,16 +156,21 @@ class entityDatabase():
             Notes: Algorithim needs to be tweeked, a document with an overwhelming amount of one entity can unfairly shift
             balances
             """
-            
-        #TODO: TEST THIS
+
         ids=engine.query(topic)
+        if(len(ids) == 0):
+            return None
+        ids=unzip(ids)[0]
         totalCount=Counter()
         for id in ids:
             if id in self.id_entity_count.keys():
                 relatedEntity=self.id_entity_count[id].most_common(context)
-                for e in relatedEntity.keys():
+                if(len(relatedEntity) == 0):
+                    continue
+                relatedEntity=unzip(relatedEntity)[0]
+                for e in relatedEntity:
                     totalCount[e]+=1
-        return totalCount.most_common(out)
+        return unzip(totalCount.most_common(out))[0]
          
     
         
