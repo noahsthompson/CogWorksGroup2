@@ -4,6 +4,7 @@ from nltk.tokenize import word_tokenize
 import numpy as np
 import string
 import time
+from numba import jit
 import hashlib
 
 class MySearchEngine():
@@ -53,6 +54,7 @@ class MySearchEngine():
         
         # lowercase and filter out punctuation (as in string.punctuation)
         return tokens
+
     def tokenize_without_period(self, text):
         """ Converts text into tokens (also called "terms" or "words").
         
@@ -82,7 +84,7 @@ class MySearchEngine():
         
         # lowercase and filter out punctuation (as in string.punctuation)
         return [token.lower() for token in tokens if not token in string.punctuation]    
-    
+    @jit
     def add(self,text,id=None):
         """ Adds document to index.
         
@@ -118,7 +120,7 @@ class MySearchEngine():
         # update document frequencies for terms found in this doc
         # i.e., counts should increase by 1 for each (unique) term in term vector
         self.doc_freq.update(term_vector.keys())
-    
+    @jit
     def remove(self, id):
         """ Removes document from index.
         
@@ -184,7 +186,7 @@ class MySearchEngine():
         # note: term needs to be lowercased so can match output of tokenizer
         # look up term in inverted index
         return self.inverted_index[term.lower()]
-
+    @jit
     def get_matches_OR(self, terms):
         """ Returns set of documents that contain at least one of the specified terms.
         
@@ -206,7 +208,7 @@ class MySearchEngine():
             ids.update(self.inverted_index[term])
         
         return ids
-    
+    @jit
     def get_matches_AND(self, terms):
         """ Returns set of documents that contain all of the specified terms.
         
@@ -228,7 +230,7 @@ class MySearchEngine():
             ids = ids.intersection(self.inverted_index[term])
         
         return ids
-    
+    @jit
     def get_matches_NOT(self, terms):
         """ Returns set of documents that don't contain any of the specified terms.
         
@@ -254,7 +256,7 @@ class MySearchEngine():
     # ------------------------------------------------------------------------
     #  scoring
     # ------------------------------------------------------------------------
-        
+    
     def idf(self, term):
         """ Returns current inverse document frequency weight for a specified term.
         
@@ -269,7 +271,7 @@ class MySearchEngine():
                 The value idf(t, D) as defined above.
         """ 
         return np.log10(self.num_docs() / (1.0 + self.doc_freq[term]))
-    
+    @jit
     def dot_product(self, tv1, tv2):
         """ Returns dot product between two term vectors (including idf weighting).
         
@@ -293,7 +295,7 @@ class MySearchEngine():
             if term in tv2:
                 result += tv1[term] * tv2[term] * self.idf(term)**2
         return result
-    
+    @jit
     def length(self, tv):
         """ Returns the length of a document (including idf weighting).
         

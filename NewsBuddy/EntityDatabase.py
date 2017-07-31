@@ -39,16 +39,20 @@ class entityDatabase():
            """
         if (isinstance(words,str)):
             tokens=word_tokenize(words)
+            print(tokens)
         else:
             tokens=words
         pos = nltk.pos_tag(tokens)
+        print(pos)
         named_entities = nltk.ne_chunk(pos, binary=True)
+        print(named_entities)
         entities=[]
         for i in range(0, len(named_entities)):
             ents = named_entities.pop()
 
             if getattr(ents, 'label', None) != None and ents.label() == "NE": 
                 entities.append(tuple([(ne[0].lower()) for ne in ents]))
+        print(entities)
         return entities
     
     def add(self,doc,id=None):
@@ -112,11 +116,15 @@ class entityDatabase():
            Notes: This function is basically a suped up wrapper for getRelatedEntity, made specifically for integration with
            Alexia.(faulty abstraction)
            """
-           
+        print(entity)
         if(isinstance(entity,str)):
             tokens=self.tokenize(entity)
             tokens=[tokens[i].lower().capitalize() for i in range(len(tokens))]
-            entity=self.getEntities(tokens)[0]
+            es=self.getEntities(tokens)
+            if len(es)>0:
+                entity=self.getEntities(tokens)[0]
+            else:
+                entity=tuple(tokens)
         else:
             entity=tuple([e.lower() for e in entity])
         print(entity)
