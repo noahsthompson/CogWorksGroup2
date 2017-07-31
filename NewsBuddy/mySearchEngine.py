@@ -368,8 +368,8 @@ class MySearchEngine():
 
         # sort results and return top k
         return scores[0:k]
-    
-    def whatIsNew(self, text):
+
+    def whatIsNew(self, text, numberReturned=5):
         """ Returns the first sentence of the top document (top document refers to the document with most occurences of text)
         
             Parameters
@@ -383,16 +383,21 @@ class MySearchEngine():
                The first sentence of the top document
                 
         """
-        bestfit = self.query(text)[0][0]
-        entiretext = self.raw_text[bestfit]
-        tokenized = self.tokenize_with_period(entiretext)
-    
-        firstsent = ""
-        i = 0
-        while (i < len(tokenized) and tokenized[i] != '.' ):
-            firstsent += tokenized[i] + " "
-            i += 1
-        return firstsent[:len(firstsent) - 1]
+        if text != None:
+            bestfit = self.query(text)[0][0]
+            entiretext = self.raw_text[bestfit]
+            headline=list(tuple((entiretext[:entiretext.find(".")],bestfit)))
+        else:
+            headlines=[]
+            ids=list(self.raw_text.keys())
+            for i in range(numberReturned):
+                id=ids[i]
+                headline=self.raw_text[id][:self.raw_text[id].find(".")]
+                headlines.append(tuple((id,headline)))
+            return headlines
+               
+                
+            
     
     def freq_in_a_doc(self, id, term):
         """ Computes the frequency of a term (e.g. "cat") within a document with ID id
