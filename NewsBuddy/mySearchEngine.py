@@ -368,8 +368,16 @@ class MySearchEngine():
 
         # sort results and return top k
         return scores[0:k]
-
-    def whatIsNew(self, text, numberReturned=5):
+    def get_headline(self,text):
+        tokens=self.tokenize_with_period(text)
+        headline=""
+        for token in tokens:
+            if(token == "."):
+                break
+            else:
+                headline+=token+" "
+        return headline
+    def whatIsNew(self, text=None, numberReturned=5):
         """ Returns the first sentence of the top document (top document refers to the document with most occurences of text)
         
             Parameters
@@ -384,15 +392,18 @@ class MySearchEngine():
                 
         """
         if text != None:
-            bestfit = self.query(text)[0][0]
-            entiretext = self.raw_text[bestfit]
-            headline=list(tuple((entiretext[:entiretext.find(".")],bestfit)))
+            bestfit = self.query(text)[0:1]
+ 
+            headline=[]
+            for id in bestfit:
+                headline.append(tuple((id[0],self.get_headline(self.raw_text[id[0]]))))
+            return headline
         else:
             headlines=[]
             ids=list(self.raw_text.keys())
             for i in range(numberReturned):
                 id=ids[i]
-                headline=self.raw_text[id][:self.raw_text[id].find(".")]
+                headline=self.get_headline(self.raw_text[id])
                 headlines.append(tuple((id,headline)))
             return headlines
                

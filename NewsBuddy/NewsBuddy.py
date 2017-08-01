@@ -89,13 +89,20 @@ def start_skill():
 
 @ask.intent("WhatsNewIntent")
 def get_whats_new(query):
+    
     session.attributes["lastIntent"]="WhatsNewIntent"
+    session.attributes["lastIntentData"]={}
     print("loading whats new")
+    print(query)
     whatsNew=se.whatIsNew(query)
+    print(whatsNew)
+    
     if(whatsNew==None):
         return statement("I couldn't find any matches to your query in my database")
-    print(whatsNew)
     numberOfHeadlines=len(unzip(whatsNew)[1])
+    session.attributes["lastIntentData"]["Headlines"]=unzip(whatsNew)[1]
+    session.attributes["lastIntentData"]["IDs"]=unzip(whatsNew)[0]
+    session.attributes["lastIntentData"]["length"]=numberOfHeadlines
     whatsNewStr=formatHeadlines(unzip(whatsNew)[1])
     print("returning")
     if(numberOfHeadlines>1):
@@ -103,10 +110,56 @@ def get_whats_new(query):
     else:
         whatsNewStr+="Would you like to hear more about this headline"
     return question(whatsNewStr)
+@ask.intent("TellMeMoreIntent")
+def tellMeMore(Headlines=None,ID=None,length=None,number=None, keywords=None):
+
+    if(session.attributes["lastIntent"]=="WhatsNewIntent"):
+        if(Headlines==None):
+            Headlines=session.attributes["lastIntentData"]["Headlines"]
+        if(ID==None):
+            ID=session.attributes["lastIntentData"]["IDs"]
+        if(length==None):
+            length=session.attributes["lastIntentData"]["length"]
+        print("printing Numbers?")
+        if( number != None):
+            number=int(number)
+        print(number)
+
+        print("printing Keywords?")
+        print(keywords)
+        print("printing Headlines")
+        print(Headlines)
+        print("printing ID")
+        print(ID)
+        if(length==1):
+            return statement(se.get(ID[0]))
+        elif(number == None and keywords ==None):
+            return question("Please specify which article to read")
+        elif(number != None):
+            if(number-1)>= 0 and (number-1)<length:
+                return statement(se.get(ID[number-1]))
+            else:
+                return statement("That number is not in the appropret range of headlines")
+        elif(keywords != None):
+            headlineSearch=MySearchEngine()
+            for i in range(length):
+                headlineSearch.add(Headlines[i],ID[i])
+            tId=headlineSearch.query(keywords)
+            print(tId)
+            if(len(tId) <= 0):
+                return statement("No document matches those keywords")
+            else:
+                return statement(se.get(tId[0][0]))                      
+        return statement("Sorry?")
 @ask.intent("YesIntent")
 def yesHandler():
     print(session.attributes["lastIntent"])
     if(session.attributes["lastIntent"]=="WhatsNewIntent"):
+        Headlines=session.attributes["lastIntentData"]["Headlines"]
+        Ids=session.attributes["lastIntentData"]["IDs"]
+        length=session.attributes["lastIntentData"]["length"]
+        if(length == 1):
+            return tellMeMore(Headlines,Ids,length)
         return statement("Could you specify which article you'd like to hear more about")
     elif(session.attributes["lastIntent"]=="AssociateEIntent"):
         el=session.attributes["lastIntentData"]["entityList"]
@@ -150,6 +203,7 @@ def get_EAssociation(entity):
 @ask.intent("AssociateTIntent")
 def get_TAssociation(topic):
     session.attributes["lastIntent"]="AssociateTIntent"
+    session.attributes["lastIntentData"]={}
     print("loading whats new")
     entitieslist=ed.associateTopic(topic,se,out=5)
     if(len(entitieslist) == None):
