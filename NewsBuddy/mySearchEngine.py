@@ -7,6 +7,15 @@ import time
 from numba import jit
 import hashlib
 
+def unzip(pairs):
+    """Splits list of pairs (tuples) into separate lists.
+    
+    Example: pairs = [("a", 1), ("b", 2)] --> ["a", "b"] and [1, 2]
+    
+    This should look familiar from our review back at the beginning of week 1
+    :)
+    """
+    return tuple(zip(*pairs))
 class MySearchEngine():
     def __init__(self):
         # Dict[str, str]: maps document id to original/raw text
@@ -99,7 +108,8 @@ class MySearchEngine():
         if id == None:
             id=hashlib.sha224(text.encode('UTF-8')).hexdigest()
         if id in self.raw_text:
-            raise RuntimeError("document with id [" + id + "] already indexed.")
+            print("already in database")
+            return None
         
         # store raw text for this doc id
         self.raw_text[id] = text
@@ -377,7 +387,7 @@ class MySearchEngine():
             else:
                 headline+=token+" "
         return headline
-    def whatIsNew(self, text=None, numberReturned=5):
+    def whatIsNew(self, text=None,startindex=0, numberReturned=5):
         """ Returns the first sentence of the top document (top document refers to the document with most occurences of text)
         
             Parameters
@@ -392,20 +402,15 @@ class MySearchEngine():
                 
         """
         if text != None:
-            bestfit = self.query(text)[0:1]
- 
-            headline=[]
-            for id in bestfit:
-                headline.append(tuple((id[0],self.get_headline(self.raw_text[id[0]]))))
-            return headline
+            print(startindex)
+            print(numberReturned)
+            if(len(self.query(text)[startindex:startindex+numberReturned])==0):
+                return None
+            ids = unzip(self.query(text)[startindex:startindex+numberReturned])[0]
+            return ids
         else:
-            headlines=[]
-            ids=list(self.raw_text.keys())
-            for i in range(numberReturned):
-                id=ids[i]
-                headline=self.get_headline(self.raw_text[id])
-                headlines.append(tuple((id,headline)))
-            return headlines
+            ids=list(self.raw_text.keys())[startindex:startindex+numberReturned]
+            return ids
                
                 
             

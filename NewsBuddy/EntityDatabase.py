@@ -65,7 +65,8 @@ class entityDatabase():
         if id == None:
             id=hashlib.sha224(doc.encode('UTF-8')).hexdigest()
         if id in self.id_entity_count.keys():
-            raise Exception("Already In Database")
+            print("already in database")
+            return None
         entities=self.getEntities(doc)
         self.id_entity_count[id]=Counter(entities)
         
