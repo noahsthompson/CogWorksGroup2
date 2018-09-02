@@ -1,2 +1,3 @@
 # CogWorksGroup2
-this team is lit af
+Projects from Summer 2017
+
