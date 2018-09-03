@@ -5,3 +5,4 @@ SongFP uses Fast Fourier Transforms to recognize songs after hearing a couple se
 
 NewsBuddy uses Stanford's GloVe library to find similarities in between sentences. It then uses this to summarize news articles.
 
+FaceDatabase can recognize faces using machine learning.
